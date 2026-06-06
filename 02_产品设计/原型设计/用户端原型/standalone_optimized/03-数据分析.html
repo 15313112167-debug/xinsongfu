@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>健康管理 - 薄荷风格原型</title>
+<!-- Tailwind CSS -->
+<script src="https://modao.cc/agent-py/static/source/js/tailwindcss.js"></script>
+<!-- Iconify -->
+<script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.js"></script>
+<!-- ECharts -->
+<script src="https://modao.cc/agent-py/static/source/js/echarts.min.js"></script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background-color: #F5F5F5;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 40px;
+            border: 8px solid #333;
+        }
+        .scroll-container {
+            height: calc(812px - 84px);
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+        .scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+        .tab-active {
+            color: #10B981;
+        }
+        .btn-click-effect:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        .card-shadow {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .mint-gradient {
+            background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+        }
+        .fab-button {
+            filter: drop-shadow(0 4px 10px rgba(16, 185, 129, 0.4));
+        }
+        /* 隐藏所有页面 */
+        .page {
+            display: none;
+        }
+        /* 显示当前页面 */
+        .page.active {
+            display: block;
+        }
+        /* 进度条动画 */
+        @keyframes progress {
+            from { width: 0; }
+            to { width: var(--target-width); }
+        }
+        .animate-progress {
+            animation: progress 1s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        @keyframes toastFade {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+        }
+        .animate-toast-fade {
+            animation: toastFade 1.8s ease-out forwards;
+        }
+        /* ========== 初次登录引导页 ========== */
+        .onboarding-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 200;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 32px;
+        }
+        .onboarding-overlay.hidden {
+            display: none !important;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 4px 0 16px;
+        }
+        .step-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #E5E7EB;
+            transition: all 0.3s;
+        }
+        .step-dot.current {
+            width: 22px;
+            border-radius: 3px;
+            background: #10B981;
+        }
+        .step-dot.done {
+            background: #10B981;
+        }
+        .onboarding-body {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .onb-step {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 24px 20px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.35s ease;
+            pointer-events: none;
+            overflow-y: auto;
+        }
+        .onb-step.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+        .onb-title {
+            font-size: 21px;
+            font-weight: 700;
+            color: #111827;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .onb-sub {
+            font-size: 12px;
+            color: #9CA3AF;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        /* 性别卡片 */
+        .gender-cards {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        .gender-card {
+            width: 130px; height: 160px;
+            border-radius: 20px;
+            border: 2px solid #F3F4F6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: #FAFAFA;
+        }
+        .gender-card.sel {
+            border-color: #10B981;
+            background: #ECFDF5;
+            box-shadow: 0 4px 16px rgba(16,185,129,0.15);
+        }
+        .gender-card .g-icon {
+            font-size: 56px;
+            line-height: 1;
+        }
+        .gender-card .g-label {
+            font-size: 15px;
+            font-weight: 600;
+            color: #9CA3AF;
+        }
+        .gender-card.sel .g-label {
+            color: #10B981;
+        }
+        /* 刻度尺 */
+        .ruler-box {
+            width: 100%;
+            text-align: center;
+            margin: 8px 0 20px;
+        }
+        .ruler-val {
+            font-size: 52px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.1;
+        }
+        .ruler-val .ruler-u {
+            font-size: 17px;
+            font-weight: 500;
+            color: #9CA3AF;
+        }
+        .ruler-range {
+            width: 100%;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #E5E7EB 0%, #10B981 50%, #E5E7EB 100%);
+            outline: none;
+        }
+        .ruler-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: #10B981;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+            cursor: pointer;
+        }
+        .ruler-ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #D1D5DB;
+            padding: 0 6px;
+        }
+        .ruler-fine {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 8px;
+        }
+        .ruler-fine button {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: 1.5px solid #E5E7EB;
+            background: #fff;
+            font-size: 18px;
+            color: #6B7280;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .ruler-fine button:active {
+            border-color: #10B981;
+            color: #10B981;
+            background: #ECFDF5;
+        }
+        /* BMI展示 */
+        .bmi-bar {
+            background: #ECFDF5;
+            border-radius: 16px;
+            padding: 14px 20px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .bmi-bar .bmi-num {
+            font-size: 22px;
+            font-weight: 700;
+            color: #10B981;
+        }
+        .bmi-bar .bmi-txt {
+            font-size: 11px;
+            color: #6B7280;
+        }
+        .bmi-bar .bmi-range-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #FBBF24, #10B981, #FBBF24, #EF4444);
+            position: relative;
+            margin-top: 10px;
+        }
+        .bmi-bar .bmi-pos {
+            position: absolute;
+            top: -4px;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: #10B981;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+            transform: translateX(-50%);
+            transition: left 0.3s;
+        }
+        .bmi-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #9CA3AF;
+            padding: 4px 0 0;
+        }
+        /* 出生日期 */
+        .scroller-row {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            height: 180px;
+        }
+        .scroller-col {
+            flex: 1;
+            max-width: 75px;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            position: relative;
+            border-radius: 12px;
+        }
+        .scroller-col::-webkit-scrollbar { display: none; }
+        .scroller-col-inner {
+            padding: 68px 0;
+        }
+        .scroller-it {
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            color: #D1D5DB;
+            scroll-snap-align: center;
+        }
+        .scroller-it.hi {
+            color: #111827;
+            font-weight: 600;
+            font-size: 19px;
+        }
+        .scroller-border {
+            position: absolute;
+            top: 50%;
+            left: 2px; right: 2px;
+            height: 44px;
+            transform: translateY(-50%);
+            border-top: 1px solid #E5E7EB;
+            border-bottom: 1px solid #E5E7EB;
+            pointer-events: none;
+            border-radius: 8px;
+        }
+        .age-show {
+            text-align: center;
+            font-size: 13px;
+            color: #6B7280;
+            margin-top: 12px;
+        }
+        .age-show strong {
+            color: #10B981;
+            font-size: 17px;
+        }
+        /* 问卷 */
+        .quiz-block {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .quiz-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tag-item {
+            padding: 7px 15px;
+            border-radius: 18px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1.5px solid #E5E7EB;
+            background: #fff;
+            color: #6B7280;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tag-item.sel {
+            border-color: #10B981;
+            background: #ECFDF5;
+            color: #10B981;
+        }
+        .switch-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 0;
+            border-bottom: 1px solid #F3F4F6;
+        }
+        .switch-row .sw-label {
+            font-size: 13px;
+            color: #374151;
+        }
+        .sw-track {
+            width: 46px; height: 26px;
+            border-radius: 13px;
+            background: #E5E7EB;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: background 0.25s;
+        }
+        .sw-track.on {
+            background: #10B981;
+        }
+        .sw-track::after {
+            content: '';
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            transition: transform 0.25s;
+        }
+        .sw-track.on::after {
+            transform: translateX(20px);
+        }
+        /* ======== Step3 健康资料开关 ======== */
+        .health-card {
+            background: #F9FAFB;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border: 1px solid #E5E7EB;
+        }
+        .health-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .health-label {
+            flex: 1;
+            min-width: 0;
+        }
+        .health-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .health-hint {
+            font-size: 11px;
+            color: #9CA3AF;
+            margin-top: 2px;
+        }
+        .health-switch {
+            width: 48px;
+            height: 28px;
+            border-radius: 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: 12px;
+            transition: background 0.25s;
+            position: relative;
+        }
+        .health-switch.off {
+            background: #D1D5DB;
+        }
+        .health-switch.on {
+            background: #10B981;
+        }
+        .health-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            transition: transform 0.25s;
+        }
+        .health-switch.off::after {
+            transform: translateX(2px);
+        }
+        .health-switch.on::after {
+            transform: translateX(22px);
+        }
+        .health-expand {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            margin-top: 0;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+        }
+        .health-input {
+            width: 100%;
+            height: 42px;
+            background: #fff;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 0 12px;
+            font-size: 13px;
+            color: #111827;
+            outline: none;
+        }
+        .health-input::placeholder {
+            color: #D1D5DB;
+        }
+        /* 方案卡片 */
+        .plan-summary {
+            width: 100%;
+            background: linear-gradient(135deg, #10B981, #34D399);
+            border-radius: 24px;
+            padding: 24px 20px;
+            color: #fff;
+            text-align: center;
+        }
+        .plan-summary h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+        .plan-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .plan-item {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 12px 8px;
+        }
+        .plan-item .p-val {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .plan-item .p-lbl {
+            font-size: 10px;
+            opacity: 0.85;
+            margin-top: 2px;
+        }
+        .plan-disclaimer {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 14px;
+        }
+        /* 引导页底部 */
+        .onboarding-bottom {
+            padding: 12px 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .onb-prev {
+            width: 46px; height: 46px;
+            border-radius: 50%;
+            border: 1.5px solid #E5E7EB;
+            background: #fff;
+            font-size: 18px;
+            color: #6B7280;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .onb-prev.invisible {
+            visibility: hidden;
+        }
+        .onb-next {
+            flex: 1;
+            height: 46px;
+            border-radius: 23px;
+            border: none;
+            background: #10B981;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .onb-next:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        .onb-next:disabled {
+            background: #D1D5DB;
+            pointer-events: none;
+        }
+        /* 趋势图占位 */
+        .trend-placeholder {
+            width: 100%;
+            height: 100px;
+            background: #F9FAFB;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #D1D5DB;
+            font-size: 12px;
+            margin-top: 12px;
+            border: 1.5px dashed #E5E7EB;
+        }
+        /* 自定义疾病底部弹窗 */
+        .disease-sheet {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 24px 28px;
+            z-index: 250;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        }
+        .disease-sheet.open {
+            transform: translateY(0);
+        }
+        .disease-sheet-backdrop {
+            position: absolute; inset: 0; z-index: 249;
+            background: rgba(0,0,0,0.3);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .disease-sheet-backdrop.on {
+            opacity: 1; pointer-events: auto;
+        }
+        .disease-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 14px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        .disease-input:focus { border-color: #10B981; }
+        .drug-input-box {
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+        }
+        .drug-input-box.show { display: block; }
+        .drug-input-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 14px;
+            font-size: 14px;
+            outline: none;
+            background: #F9FAFB;
+        }
+        .drug-input-box input:focus { border-color: #10B981; }
+        .custom-disease-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .custom-disease-chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 11px;
+            background: #ECFDF5;
+            color: #10B981;
+            border: 1px solid #A7F3D0;
+        }
+        .custom-disease-chip .remove-chip {
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+<div class="phone-container">
+<!-- 顶部状态栏模拟 -->
+<div class="h-6 w-full flex justify-between items-center px-6 pt-2 text-[10px] font-medium text-gray-500 z-50">
+<span>09:41</span>
+<div class="flex gap-1">
+<iconify-icon icon="solar:signal-combined-bold" width="12"></iconify-icon>
+<iconify-icon icon="solar:wi-fi-bold" width="12"></iconify-icon>
+<iconify-icon icon="solar:battery-charge-bold" width="12"></iconify-icon>
+</div>
+</div>
+<div class="scroll-container" id="main-content">
+<div class="page active" id="page-tracking">
+<div class="px-5 pt-8 pb-4">
+  <h2 class="text-xl font-bold text-gray-900">数据分析</h2>
+</div>
+<div class="px-4 space-y-4 pb-24">
+
+<!-- 本周概览 -->
+<div class="bg-white rounded-2xl p-4 card-shadow">
+  <div class="flex justify-between items-center mb-3">
+    <h3 class="text-sm font-bold text-gray-800">📈 本周概览</h3>
+    <span class="text-[10px] text-gray-400">6/3 - 6/9</span>
+  </div>
+  <div class="grid grid-cols-4 gap-2">
+    <div class="text-center"><div class="text-lg font-bold text-emerald-600">-1.2</div><div class="text-[9px] text-gray-400">体重(kg)</div></div>
+    <div class="text-center"><div class="text-lg font-bold text-emerald-600">-0.5</div><div class="text-[9px] text-gray-400">体脂(%)</div></div>
+    <div class="text-center"><div class="text-lg font-bold text-gray-800">+2</div><div class="text-[9px] text-gray-400">运动(次)</div></div>
+    <div class="text-center"><div class="text-lg font-bold text-gray-800">-150</div><div class="text-[9px] text-gray-400">周均摄入</div></div>
+  </div>
+  <div class="w-full h-1.5 bg-gray-100 rounded-full mt-3 overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" style="width:68%"></div></div>
+  <p class="text-[10px] text-gray-400 mt-1.5">本周目标完成度 68%</p>
+</div>
+
+<!-- 趋势图网格 -->
+<div class="grid grid-cols-2 gap-3">
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('体重趋势','weight')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><iconify-icon icon="solar:scale-bold" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">体重趋势</span></div>
+    <div class="w-full h-32" id="chart-weight"></div>
+    <div class="flex justify-between text-[10px] text-gray-400 mt-1"><span>-1.2kg 近7天</span><span>↓ 趋势下降</span></div>
+  </div>
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('体脂趋势','fat')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600"><iconify-icon icon="solar:water-drops-bold" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">体脂趋势</span></div>
+    <div class="w-full h-32" id="chart-fat"></div>
+    <div class="flex justify-between text-[10px] text-gray-400 mt-1"><span>-0.5% 近7天</span><span>↓ 趋势下降</span></div>
+  </div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('三围 · 腰臀比','measure')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600"><iconify-icon icon="solar:ruler-linear" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">三围 · 腰臀比</span></div>
+    <div class="w-full h-28" id="chart-measure"></div>
+  </div>
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('尿酮趋势','ketone')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600"><iconify-icon icon="solar:test-tube-linear" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">尿酮趋势</span></div>
+    <div class="w-full h-28" id="chart-ketone"></div>
+  </div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('运动趋势','exercise')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600"><iconify-icon icon="solar:running-round-linear" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">运动趋势</span></div>
+    <div class="w-full h-28" id="chart-exercise"></div>
+  </div>
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('睡眠趋势','sleep')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600"><iconify-icon icon="solar:moon-sleep-linear" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">睡眠趋势</span></div>
+    <div class="w-full h-28" id="chart-sleep"></div>
+  </div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('饮水趋势','water')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center text-cyan-600"><iconify-icon icon="solar:cup-water-bold" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">饮水趋势</span></div>
+    <div class="w-full h-28" id="chart-water"></div>
+  </div>
+  <div class="bg-white rounded-2xl p-4 card-shadow" onclick="openTrend('BMI趋势','bmi')">
+    <div class="flex items-center gap-2 mb-2"><div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600"><iconify-icon icon="solar:chart-2-linear" width="18"></iconify-icon></div><span class="text-xs font-bold text-gray-700">BMI趋势</span></div>
+    <div class="w-full h-28" id="chart-bmi"></div>
+  </div>
+</div>
+
+<!-- 智能设备关联 -->
+<div class="bg-white rounded-2xl p-4 card-shadow flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"><iconify-icon icon="solar:bluetooth-wave-bold" width="20" class="text-gray-500"></iconify-icon></div>
+    <div><p class="text-xs font-bold text-gray-800">连接智能设备</p><p class="text-[10px] text-gray-400">蓝牙体脂秤 · 自动同步数据</p></div>
+  </div>
+  <span class="text-[11px] text-emerald-500 font-medium" onclick="switchPageFixed('page-profile');showToast('请前往「我的」页面管理设备')" style="cursor:pointer;">去绑定 →</span>
+</div>
+
+</div>
+</div>
+</div>
+<div class="absolute bottom-0 w-full h-20 bg-white border-t flex items-center justify-around px-2 z-50">
+<button class="nav-item flex flex-col items-center gap-1 text-gray-400" data-page="page-home" onclick="if(document.getElementById('page-home')){switchPage('page-home')}">
+<iconify-icon icon="solar:home-2-bold" width="24"></iconify-icon>
+<span class="text-[10px] font-medium">首页</span>
+</button>
+<button class="nav-item flex flex-col items-center gap-1 tab-active" data-page="page-tracking" onclick="switchPage('page-tracking')">
+<iconify-icon icon="solar:chart-2-linear" width="24"></iconify-icon>
+<span class="text-[10px] font-medium">数据</span>
+</button>
+<div class="relative -mt-10">
+<button class="w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center text-white fab-button btn-click-effect" onclick="switchPage('page-diet-record')">
+<iconify-icon icon="solar:add-circle-bold" width="32"></iconify-icon>
+</button>
+</div>
+<button class="nav-item flex flex-col items-center gap-1 text-gray-400" data-page="page-messages" onclick="switchPage('page-messages')">
+<iconify-icon icon="solar:user-heart-rounded-linear" width="24"></iconify-icon>
+<span class="text-[10px] font-medium">营养师</span>
+</button>
+<button class="nav-item flex flex-col items-center gap-1 text-gray-400" data-page="page-profile" onclick="switchPage('page-profile')">
+<iconify-icon icon="solar:user-linear" width="24"></iconify-icon>
+<span class="text-[10px] font-medium">我的</span>
+</button>
+</div>
+
+<!-- ======== 趋势详情二级页 ======== -->
+<style>
+.trend-page{position:absolute;inset:0;z-index:260;background:#F9FAFB;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column}
+.trend-page.open{transform:translateX(0)}
+.tp-pill{padding:6px 16px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;background:#F3F4F6;color:#6B7280}
+.tp-pill.on{background:#10B981;color:#fff}
+</style>
+<div class="trend-page" id="trend-detail">
+  <div class="flex items-center gap-3 px-4 pt-10 pb-3 bg-white border-b">
+    <span style="font-size:22px;cursor:pointer;line-height:1" onclick="closeTrend()">‹</span>
+    <span class="text-base font-bold text-gray-900" id="trend-title">趋势</span>
+  </div>
+  <div class="flex-1 overflow-y-auto p-4 space-y-4">
+    <div class="flex gap-2" id="trend-period">
+      <span class="tp-pill on" onclick="renderTrend('week')">近7天</span>
+      <span class="tp-pill" onclick="renderTrend('month')">近4周</span>
+    </div>
+    <div class="bg-white rounded-2xl p-4 card-shadow">
+      <div class="w-full" style="height:220px" id="trend-detail-chart"></div>
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-white rounded-2xl p-3 card-shadow text-center"><p class="text-[10px] text-gray-400">当前</p><p class="text-base font-bold text-gray-800" id="trend-cur">--</p></div>
+      <div class="bg-white rounded-2xl p-3 card-shadow text-center"><p class="text-[10px] text-gray-400">区间变化</p><p class="text-base font-bold text-emerald-600" id="trend-diff">--</p></div>
+      <div class="bg-white rounded-2xl p-3 card-shadow text-center"><p class="text-[10px] text-gray-400">平均</p><p class="text-base font-bold text-gray-800" id="trend-avg">--</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var TREND_DATA={
+  weight:{unit:'kg',week:[66.2,66.0,65.8,65.5,65.4,65.1,65.0],month:[68,67.2,66.5,65.0]},
+  fat:{unit:'%',week:[25.5,25.3,25.1,24.9,24.8,24.6,24.5],month:[27,26.2,25.4,24.5]},
+  measure:{unit:'cm',week:[80,79.5,79,78.6,78.3,78.1,78],month:[82,80.5,79,78]},
+  ketone:{unit:'级',week:[0,1,2,2,3,2,2],month:[0,1,2,2]},
+  exercise:{unit:'min',week:[20,30,0,45,30,25,40],month:[120,150,180,200]},
+  sleep:{unit:'h',week:[6.5,7,7.2,6.8,7.5,7.3,7.4],month:[6.8,7,7.1,7.3]},
+  water:{unit:'ml',week:[1500,1800,1600,2000,1700,1900,2100],month:[1600,1750,1850,1900]},
+  bmi:{unit:'',week:[23.2,23.0,22.9,22.7,22.6,22.5,22.5],month:[24,23.5,23,22.5]}
+};
+var _trendChart=null,_trendKey='weight';
+function openTrend(title,key){
+  _trendKey=key;
+  document.getElementById('trend-title').textContent=title;
+  document.getElementById('trend-detail').classList.add('open');
+  setTimeout(function(){
+    if(!_trendChart && window.echarts){_trendChart=echarts.init(document.getElementById('trend-detail-chart'));}
+    renderTrend('week');
+  },150);
+}
+function closeTrend(){ document.getElementById('trend-detail').classList.remove('open'); }
+function renderTrend(period){
+  var pills=document.querySelectorAll('#trend-period .tp-pill');
+  pills.forEach(function(p){p.classList.remove('on');});
+  (period==='week'?pills[0]:pills[1]).classList.add('on');
+  var d=TREND_DATA[_trendKey]||{unit:'',week:[],month:[]};
+  var arr=(period==='month')?d.month:d.week;
+  var labels=(period==='month')?['第1周','第2周','第3周','第4周']:['一','二','三','四','五','六','日'];
+  labels=labels.slice(0,arr.length);
+  if(_trendChart){
+    _trendChart.setOption({
+      grid:{left:38,right:16,top:18,bottom:26},
+      xAxis:{type:'category',data:labels,axisLine:{lineStyle:{color:'#E5E7EB'}},axisLabel:{color:'#9CA3AF',fontSize:10}},
+      yAxis:{type:'value',scale:true,splitLine:{lineStyle:{color:'#F3F4F6'}},axisLabel:{color:'#9CA3AF',fontSize:10}},
+      series:[{type:'line',smooth:true,data:arr,symbol:'circle',symbolSize:6,lineStyle:{color:'#10B981',width:3},itemStyle:{color:'#10B981'},areaStyle:{color:'rgba(16,185,129,0.12)'}}]
+    });
+  }
+  document.getElementById('trend-cur').textContent=arr[arr.length-1]+d.unit;
+  var diff=(arr[arr.length-1]-arr[0]);
+  document.getElementById('trend-diff').textContent=(diff>0?'+':'')+diff.toFixed(1)+d.unit;
+  var avg=arr.reduce(function(a,b){return a+b;},0)/arr.length;
+  document.getElementById('trend-avg').textContent=avg.toFixed(1)+d.unit;
+}
+</script>
+
+<script>
+    // ========== Page Navigation ==========
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        var target = document.getElementById(pageId);
+        if (target) target.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(function(item) {
+            var icon = item.querySelector('iconify-icon');
+            var iconName = icon.getAttribute('icon');
+            if (item.getAttribute('data-page') === pageId) {
+                item.classList.add('tab-active');
+                item.classList.remove('text-gray-400');
+                icon.setAttribute('icon', iconName.replace('linear', 'bold'));
+            } else {
+                item.classList.remove('tab-active');
+                item.classList.add('text-gray-400');
+                icon.setAttribute('icon', iconName.replace('bold', 'linear'));
+            }
+        });
+        if (pageId === 'page-tracking') setTimeout(initCharts, 100);
+    }
+
+    function switchSubTab(tabId) {
+        document.querySelectorAll('.sub-tab').forEach(function(t) {
+            t.classList.remove('border-emerald-500','text-emerald-500','font-bold');
+            t.classList.add('border-transparent','text-gray-400','font-medium');
+        });
+        var at = document.querySelector('.sub-tab[data-tab="' + tabId + '"]');
+        at.classList.add('border-emerald-500','text-emerald-500','font-bold');
+        at.classList.remove('border-transparent','text-gray-400','font-medium');
+        document.querySelectorAll('.sub-page').forEach(function(p) { p.classList.add('hidden'); });
+        var sp = document.getElementById('sub-page-' + tabId);
+        if (sp) sp.classList.remove('hidden');
+        setTimeout(initCharts, 50);
+    }
+
+    function switchRecordTab(tabId) {
+        document.querySelectorAll('.record-tab').forEach(function(t) {
+            t.classList.remove('border-emerald-500','text-emerald-500','font-bold');
+            t.classList.add('border-transparent','text-gray-400','font-medium');
+        });
+        var rt = document.querySelector('.record-tab[data-tab="' + tabId + '"]');
+        rt.classList.add('border-emerald-500','text-emerald-500','font-bold');
+        document.querySelectorAll('[id^="record-content-"]').forEach(function(el) { el.classList.add('hidden'); });
+        var tgt = document.getElementById('record-content-' + tabId);
+        if (tgt) tgt.classList.remove('hidden');
+    }
+
+    // ========== Food Selector ==========
+    var currentFoodName='', currentCalPer100g=0, selectedGrams=100;
+    function showFoodSelector(name, calPer100g) {
+        currentFoodName = name; currentCalPer100g = calPer100g; selectedGrams = 100;
+        document.getElementById('selector-food-name').textContent = name;
+        document.getElementById('selector-total-cal').textContent = Math.round(calPer100g);
+        document.getElementById('selector-cal-detail').textContent = calPer100g + ' kcal × 100g';
+        document.querySelectorAll('.preset-btn').forEach(function(b) {
+            b.classList.remove('bg-emerald-50','text-emerald-600','font-bold','border-emerald-200');
+            b.classList.add('bg-gray-50','text-gray-600','font-medium','border-gray-100');
+        });
+        var fp = document.querySelector('.preset-btn[data-grams="100"]');
+        if (fp) { fp.classList.add('bg-emerald-50','text-emerald-600','font-bold','border-emerald-200'); fp.classList.remove('bg-gray-50','text-gray-600','font-medium','border-gray-100'); }
+        document.getElementById('custom-grams').value = '';
+        document.getElementById('food-selector-overlay').classList.remove('hidden');
+    }
+    function hideFoodSelector() { document.getElementById('food-selector-overlay').classList.add('hidden'); }
+    function selectPreset(btn, grams) {
+        selectedGrams = grams;
+        document.querySelectorAll('.preset-btn').forEach(function(b) {
+            b.classList.remove('bg-emerald-50','text-emerald-600','font-bold','border-emerald-200');
+            b.classList.add('bg-gray-50','text-gray-600','font-medium','border-gray-100');
+        });
+        btn.classList.add('bg-emerald-50','text-emerald-600','font-bold','border-emerald-200');
+        btn.classList.remove('bg-gray-50','text-gray-600','font-medium','border-gray-100');
+        document.getElementById('selector-total-cal').textContent = Math.round(currentCalPer100g * grams / 100);
+        document.getElementById('selector-cal-detail').textContent = currentCalPer100g + ' kcal × ' + grams + 'g';
+        document.getElementById('custom-grams').value = '';
+    }
+    function applyCustomGrams() {
+        var v = parseInt(document.getElementById('custom-grams').value);
+        if (!v || v <= 0) return;
+        selectedGrams = v;
+        document.querySelectorAll('.preset-btn').forEach(function(b) {
+            b.classList.remove('bg-emerald-50','text-emerald-600','font-bold','border-emerald-200');
+            b.classList.add('bg-gray-50','text-gray-600','font-medium','border-gray-100');
+        });
+        document.getElementById('selector-total-cal').textContent = Math.round(currentCalPer100g * v / 100);
+        document.getElementById('selector-cal-detail').textContent = currentCalPer100g + ' kcal × ' + v + 'g';
+    }
+    function confirmFoodAdd() { hideFoodSelector(); showToast('已添加到今日饮食记录'); }
+
+    // ========== Body Entry ==========
+    function switchBodyMetric(metric) {
+        document.querySelectorAll('.body-metric-btn').forEach(function(b) {
+            b.classList.remove('bg-emerald-500','text-white');
+            b.classList.add('bg-gray-100','text-gray-500');
+        });
+        document.querySelector('.body-metric-btn[data-metric="' + metric + '"]').classList.add('bg-emerald-500','text-white');
+        document.querySelectorAll('.body-metric-content').forEach(function(c) { c.classList.add('hidden'); });
+        var t = document.getElementById('body-metric-' + metric);
+        if (t) t.classList.remove('hidden');
+    }
+    function showBodyEntry() { document.getElementById('body-entry-overlay').classList.remove('hidden'); }
+    function hideBodyEntry() { document.getElementById('body-entry-overlay').classList.add('hidden'); }
+    function toggleBodyUnit(btn, unit) {
+        var row = btn.closest('.body-unit-row');
+        row.querySelectorAll('.unit-btn').forEach(function(b) {
+            b.classList.remove('bg-emerald-500','text-white','border-emerald-200');
+            b.classList.add('bg-gray-100','text-gray-500','border-gray-100');
+        });
+        btn.classList.add('bg-emerald-500','text-white','border-emerald-200');
+        btn.classList.remove('bg-gray-100','text-gray-500','border-gray-100');
+    }
+    function saveBodyRecord() { hideBodyEntry(); showToast('记录成功！'); }
+
+    // ========== Toast ==========
+    function showToast(msg) {
+        var t = document.createElement('div');
+        t.className = 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[200] bg-gray-900 text-white px-6 py-3 rounded-2xl text-sm font-medium shadow-lg';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 300ms'; setTimeout(function() { t.remove(); }, 300); }, 1500);
+    }
+
+    // ========== Charts ==========
+    var dietChart, bodyChart;
+    function initCharts() {
+        var dd = document.getElementById('diet-chart');
+        if (dd) {
+            if (dietChart) dietChart.dispose();
+            dietChart = echarts.init(dd);
+            dietChart.setOption({
+                tooltip: { trigger: 'item' },
+                series: [{
+                    name: '热量分配', type: 'pie', radius: ['60%', '85%'],
+                    avoidLabelOverlap: false, label: { show: false },
+                    data: [
+                        { value: 342, name: '早餐', itemStyle: { color: '#FDBA74' } },
+                        { value: 580, name: '午餐', itemStyle: { color: '#60A5FA' } },
+                        { value: 323, name: '晚餐', itemStyle: { color: '#A78BFA' } },
+                        { value: 282, name: '剩余', itemStyle: { color: '#F3F4F6' } }
+                    ]
+                }]
+            });
+        }
+        var bd = document.getElementById('body-chart');
+        if (bd) {
+            if (bodyChart) bodyChart.dispose();
+            bodyChart = echarts.init(bd);
+            bodyChart.setOption({
+                grid: { left: '10%', right: '5%', top: '10%', bottom: '20%' },
+                xAxis: { type: 'category', data: ['05-13','05-14','05-15','05-16','05-17','05-18','05-19'], axisLine: { show: false }, axisTick: { show: false }, axisLabel: { fontSize: 10, color: '#9CA3AF' } },
+                yAxis: { type: 'value', min: 64, splitLine: { lineStyle: { type: 'dashed', color: '#F3F4F6' } }, axisLabel: { fontSize: 10, color: '#9CA3AF' } },
+                series: [{ data: [68.5,67.8,67.2,66.5,66.0,65.5,65.2], type: 'line', smooth: true, symbol: 'circle', symbolSize: 6, itemStyle: { color: '#10B981' }, areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{ offset: 0, color: 'rgba(16,185,129,0.2)' },{ offset: 1, color: 'rgba(16,185,129,0)' }]) } }]
+            });
+        }
+    }
+
+    // ========== ONBOARDING ==========
+    var onbCurStep = 1;
+    var ONB_TOTAL = 4;
+    var onbGender = '';
+    var customDiseases = [];
+    var customAllergies = [];
+    var customPhysios = [];
+    var needWeightLoss = true;
+
+    function selectGender(el, gender) {
+        document.querySelectorAll('.gender-card').forEach(function(c) { c.classList.remove('sel'); });
+        el.classList.add('sel');
+        onbGender = gender;
+    }
+
+    function updateRuler(id, val) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (id === 'onb-weight' || id === 'onb-target-wt')
+            el.textContent = parseFloat(val).toFixed(1);
+        else
+            el.textContent = parseInt(val);
+    }
+
+    function fineRuler(inpId, dispId, delta) {
+        var inp = document.getElementById(inpId);
+        var isW = (dispId === 'onb-weight' || dispId === 'onb-target-wt');
+        var step = isW ? 0.5 : 1;
+        var v = parseFloat(inp.value) + delta;
+        v = Math.round(v / step) * step;
+        v = Math.max(parseFloat(inp.min), Math.min(parseFloat(inp.max), v));
+        inp.value = v;
+        var dispVal = isW ? v.toFixed(1) : parseInt(v);
+        document.getElementById(dispId).textContent = dispVal;
+        if (dispId === 'onb-weight') { updateBMI(); updatePlanCalc(); }
+        if (dispId === 'onb-target-wt') { updateTargetBMI(); updatePlanCalc(); }
+    }
+
+    function updateBMI() {
+        var h = parseFloat(document.getElementById('onb-height-inp').value) / 100;
+        var w = parseFloat(document.getElementById('onb-weight-inp').value);
+        if (!h || !w) return;
+        var bmi = w / (h * h);
+        var bmiR = bmi.toFixed(1);
+        document.getElementById('onb-bmi').textContent = bmiR;
+        var label = '正常', left = 50;
+        if (bmi < 18.5) { label = '偏瘦'; left = 12; }
+        else if (bmi < 24) { label = '正常'; left = 38; }
+        else if (bmi < 28) { label = '超重'; left = 68; }
+        else { label = '肥胖'; left = 88; }
+        document.getElementById('onb-bmi-label').textContent = label;
+        var p2 = document.getElementById('bmi-pos2');
+        if (p2) p2.style.left = left + '%';
+        updatePlanCalc();
+    }
+
+    function updateTargetBMI() {
+        var h = parseFloat(document.getElementById('onb-height-inp').value) / 100;
+        var tw = parseFloat(document.getElementById('onb-target-inp').value);
+        if (!h || !tw) return;
+        var bmi = tw / (h * h);
+        var bmiR = bmi.toFixed(1);
+        document.getElementById('target-bmi').textContent = bmiR;
+        var label = '正常', left = 50;
+        if (bmi < 18.5) { label = '偏瘦'; left = 12; document.getElementById('target-bmi-warn').style.display = 'block'; }
+        else if (bmi < 24) { label = '正常'; left = 38; document.getElementById('target-bmi-warn').style.display = 'none'; }
+        else if (bmi < 28) { label = '超重'; left = 68; document.getElementById('target-bmi-warn').style.display = 'none'; }
+        else { label = '肥胖'; left = 88; document.getElementById('target-bmi-warn').style.display = 'none'; }
+        document.getElementById('target-bmi-label').textContent = label;
+        var pos = document.getElementById('target-bmi-pos');
+        if (pos) pos.style.left = left + '%';
+    }
+
+    function setupTargetSlider() {
+        var cw = parseFloat(document.getElementById('onb-weight-inp').value);
+        var inp = document.getElementById('onb-target-inp');
+        inp.max = cw - 0.1;
+        if (parseFloat(inp.value) >= cw) inp.value = cw - 0.5;
+        inp.min = 35;
+        updateRuler('onb-target-wt', inp.value);
+        updateTargetBMI();
+        updatePlanCalc();
+        var ticks = document.getElementById('target-ticks');
+        if (ticks) {
+            var r = Math.floor(cw - 0.1);
+            ticks.innerHTML = '<span>35</span><span>' + Math.round(35 + (r - 35) / 3) + '</span><span>' + Math.round(35 + 2 * (r - 35) / 3) + '</span><span>' + r + '</span>';
+        }
+    }
+
+    function updatePlanCalc() {
+        var cw = parseFloat(document.getElementById('onb-weight-inp').value);
+        var tw = parseFloat(document.getElementById('onb-target-inp').value);
+        var h = parseFloat(document.getElementById('onb-height-inp').value);
+        if (!cw || !tw || !h) return;
+        var diff = cw - tw;
+        var ws = diff > 0 ? Math.max(4, Math.round(Math.abs(diff) / 0.5)) : 0;
+        var wkly = ws > 0 ? (diff / ws) : 0;
+
+        // 身高、体重
+        var ph = document.getElementById('plan-height');
+        if (ph) ph.textContent = h;
+        var pwEl = document.getElementById('plan-weight');
+        if (pwEl) pwEl.textContent = cw;
+
+        // BMI分类和进度条
+        var bmi = cw / ((h / 100) * (h / 100));
+        var bmiR = bmi.toFixed(1);
+        var bmiEl = document.getElementById('plan-bmi');
+        if (bmiEl) bmiEl.textContent = bmiR;
+
+        var catEl = document.getElementById('plan-bmi-cat');
+        var dotEl = document.getElementById('plan-bmi-dot');
+        var catName, leftPct, dotColor;
+        if (bmi < 18.5) { catName = '偏瘦'; leftPct = 8; dotColor = '#F59E0B'; }
+        else if (bmi < 24) { catName = '理想'; leftPct = 38; dotColor = '#10B981'; }
+        else if (bmi < 28) { catName = '偏胖'; leftPct = 65; dotColor = '#F59E0B'; }
+        else { catName = '肥胖'; leftPct = 92; dotColor = '#EF4444'; }
+        if (catEl) catEl.textContent = catName;
+        if (dotEl) { dotEl.style.left = leftPct + '%'; dotEl.style.borderColor = dotColor; }
+
+        // 目标体重、周期
+        var pt = document.getElementById('plan-target');
+        if (pt) pt.innerHTML = tw + '<span style="font-size:14px">kg</span>';
+        var pw = document.getElementById('plan-weeks');
+        if (pw) pw.innerHTML = ws + '<span style="font-size:14px">周</span>';
+        var pwk = document.getElementById('plan-weekly');
+        if (pwk) pwk.innerHTML = Math.abs(wkly).toFixed(1) + '<span style="font-size:14px">kg/周</span>';
+
+        // 热量
+        var cd = diff > 0 ? Math.min(Math.round(Math.abs(wkly) * 700), 800) : 0;
+        var ct = Math.max(1200, 2000 - cd);
+        var ce = document.getElementById('plan-cal');
+        if (ce) ce.textContent = ct;
+        var de = document.getElementById('plan-deficit');
+        if (de) de.textContent = cd;
+
+        // 饮食建议
+        var dietEl = document.getElementById('plan-diet-tip');
+        if (dietEl) {
+            if (bmi >= 28) {
+                dietEl.textContent = '建议严格控制总热量摄入，减少高油高糖食物，增加蔬菜比例，优先选择低GI主食，每日蛋白质摄入不低于60g。';
+            } else if (bmi >= 24) {
+                dietEl.textContent = '建议控制精制碳水摄入，增加优质蛋白（鸡胸肉、鱼虾、豆制品）和膳食纤维（蔬菜、全谷物），每日热量控制在目标范围内。';
+            } else if (bmi >= 18.5) {
+                dietEl.textContent = '建议保持均衡饮食，适当增加优质蛋白摄入，控制精制糖和油炸食品，多吃蔬果和全谷物。';
+            } else {
+                dietEl.textContent = '建议适当增加营养摄入，保证每日三餐规律，优先选择高蛋白食物（蛋、奶、瘦肉），可适当加餐补充能量。';
+            }
+        }
+
+        // 运动建议
+        var exEl = document.getElementById('plan-exercise-tip');
+        if (exEl) {
+            if (bmi >= 28) {
+                exEl.textContent = '建议从低强度运动开始（如快走、游泳、骑行），每周 4-5 次，每次 30-40 分钟，避免跳绳、跑步等高冲击运动保护关节。';
+            } else if (bmi >= 24) {
+                exEl.textContent = '建议每周进行 3-5 次中等强度有氧运动（慢跑、游泳、动感单车等）结合 2-3 次力量训练，每次 40-50 分钟效果更佳。';
+            } else if (bmi >= 18.5) {
+                exEl.textContent = '建议每周 3-4 次有氧运动（慢跑、快走、游泳等）结合 2 次力量训练，保持运动多样性，每次 30-45 分钟。';
+            } else {
+                exEl.textContent = '建议以力量训练为主（自重训练、瑜伽、普拉提等）帮助增肌，配合适量有氧运动（慢跑、快走），每周 3-4 次。';
+            }
+        }
+    }
+
+    function refreshBmiAssessment() {
+        var h = parseFloat(document.getElementById('onb-height-inp').value) / 100;
+        var w = parseFloat(document.getElementById('onb-weight-inp').value);
+        var bmi = w / (h * h);
+        var bmiR = bmi.toFixed(1);
+        var lowW = (18.5 * h * h).toFixed(1);
+        var highW = (24 * h * h).toFixed(1);
+        document.getElementById('bmi-result-num').textContent = bmiR;
+        document.getElementById('bmi-range-low').textContent = lowW;
+        document.getElementById('bmi-range-high').textContent = highW;
+        var badge = document.getElementById('bmi-result-badge');
+        var title = document.getElementById('bmi-result-title');
+        var sub = document.getElementById('bmi-result-sub');
+        var normalBox = document.getElementById('bmi-normal-box');
+        var suggestion = document.getElementById('bmi-suggestion-text');
+        var choiceBtns = document.getElementById('bmi-choice-btns');
+        if (bmi >= 24) {
+            badge.textContent = bmi >= 28 ? '肥胖' : '超重';
+            badge.style.background = '#FEF2F2'; badge.style.color = '#DC2626';
+            title.textContent = 'BMI 偏高';
+            sub.textContent = '您的体重超出健康范围，建议设定减重目标';
+            normalBox.style.display = 'none';
+            suggestion.textContent = '';
+            choiceBtns.style.display = 'none';
+            needWeightLoss = true;
+        } else if (bmi >= 18.5) {
+            badge.textContent = '正常';
+            badge.style.background = '#ECFDF5'; badge.style.color = '#059669';
+            title.textContent = 'BMI 正常';
+            sub.textContent = '您的体重处于健康范围';
+            normalBox.style.display = 'block';
+            suggestion.textContent = '您是否有减重需求？';
+            choiceBtns.style.display = 'flex';
+            needWeightLoss = false;
+        } else {
+            badge.textContent = '偏瘦';
+            badge.style.background = '#FEF3C7'; badge.style.color = '#D97706';
+            title.textContent = 'BMI 偏瘦';
+            sub.textContent = '您的体重偏低，建议适当增加营养';
+            normalBox.style.display = 'none';
+            suggestion.textContent = '';
+            choiceBtns.style.display = 'none';
+            needWeightLoss = false;
+        }
+    }
+
+    function acceptWeightLoss() {
+        needWeightLoss = true;
+        document.getElementById('onb-prev-btn').style.display = '';
+        document.getElementById('onb-next-btn').style.display = '';
+        showOnbStep(6);
+    }
+
+    function declineWeightLoss() {
+        needWeightLoss = false;
+        finishOnboarding();
+    }
+
+    // ========== Date Scrollers ==========
+    var dateYear, dateMonth, dateDay;
+    function initDateScrollers() {
+        var curY = 1998, curM = 6, curD = 15;
+        dateYear = curY; dateMonth = curM; dateDay = curD;
+
+        function buildCol(colEl, start, end, selected) {
+            var inner = colEl.querySelector('.scroller-col-inner');
+            inner.innerHTML = '';
+            for (var i = start; i <= end; i++) {
+                var div = document.createElement('div');
+                div.className = 'scroller-it';
+                div.textContent = i;
+                if (i === selected) div.classList.add('hi');
+                div.addEventListener('click', function() {
+                    colEl.querySelectorAll('.scroller-it').forEach(function(d) { d.classList.remove('hi'); });
+                    this.classList.add('hi');
+                    this.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    updateAge();
+                });
+                inner.appendChild(div);
+            }
+            requestAnimationFrame(function() {
+                var sel = inner.querySelector('.scroller-it.hi');
+                if (sel) sel.scrollIntoView({ block: 'center' });
+            });
+        }
+
+        buildCol(document.getElementById('sc-year'), 1940, 2010, curY);
+        buildCol(document.getElementById('sc-month'), 1, 12, curM);
+        buildCol(document.getElementById('sc-day'), 1, 31, curD);
+
+        document.querySelectorAll('.scroller-col').forEach(function(col) {
+            col.addEventListener('scroll', function() {
+                var items = col.querySelectorAll('.scroller-it');
+                var colRect = col.getBoundingClientRect();
+                var centerY = colRect.top + colRect.height / 2;
+                var closest = null, minDist = Infinity;
+                items.forEach(function(it) {
+                    var r = it.getBoundingClientRect();
+                    var dist = Math.abs(r.top + r.height / 2 - centerY);
+                    if (dist < minDist) { minDist = dist; closest = it; }
+                });
+                if (closest) {
+                    var changed = false;
+                    items.forEach(function(it) {
+                        if (it === closest && !it.classList.contains('hi')) { it.classList.add('hi'); changed = true; }
+                        else if (it !== closest && it.classList.contains('hi')) { it.classList.remove('hi'); }
+                    });
+                    if (changed) updateAge();
+                }
+            });
+        });
+    }
+
+    function getSelectedDate() {
+        var yEl = document.querySelector('#sc-year .scroller-it.hi');
+        var mEl = document.querySelector('#sc-month .scroller-it.hi');
+        var dEl = document.querySelector('#sc-day .scroller-it.hi');
+        if (!yEl || !mEl || !dEl) return null;
+        return { year: parseInt(yEl.textContent), month: parseInt(mEl.textContent), day: parseInt(dEl.textContent) };
+    }
+
+    function updateAge() {
+        var d = getSelectedDate();
+        if (!d) return;
+        var now = new Date();
+        var age = now.getFullYear() - d.year;
+        if (now.getMonth() + 1 < d.month || (now.getMonth() + 1 === d.month && now.getDate() < d.day)) age--;
+        document.getElementById('onb-age').textContent = age;
+    }
+
+    // ========== Step Navigation ==========
+    function showOnbStep(n) {
+        document.querySelectorAll('#onb-body .onb-step').forEach(function(s) {
+            s.classList.remove('active');
+            if (parseInt(s.dataset.step) < n) s.style.transform = 'translateX(-50px)';
+            else if (parseInt(s.dataset.step) > n) s.style.transform = 'translateX(50px)';
+        });
+        var cur = document.querySelector('#onb-body .onb-step[data-step="' + n + '"]');
+        if (cur) { cur.classList.add('active'); cur.style.transform = 'translateX(0)'; }
+        onbCurStep = n;
+
+        document.querySelectorAll('#step-dots .step-dot').forEach(function(d, i) {
+            d.classList.remove('current', 'done');
+            if (i + 1 === n) d.classList.add('current');
+            else if (i + 1 < n) d.classList.add('done');
+        });
+
+        var prevBtn = document.getElementById('onb-prev-btn');
+        var nextBtn = document.getElementById('onb-next-btn');
+        prevBtn.classList.toggle('invisible', n === 1);
+        if (n === ONB_TOTAL) {
+            nextBtn.textContent = '查看报告';
+            nextBtn.classList.add('mint-gradient');
+        } else {
+            nextBtn.textContent = '下一步';
+            nextBtn.classList.remove('mint-gradient');
+        }
+
+        // Step-specific init
+        if (n === 1) setTimeout(initDateScrollers, 100);
+        if (n === 2) { updateBMI(); }
+        if (n === 4) updatePlanCalc();
+    }
+
+    function nextOnbStep() {
+        if (onbCurStep === 1 && !onbGender) { showToast('请选择性别'); return; }
+        if (onbCurStep < ONB_TOTAL) showOnbStep(onbCurStep + 1);
+        else finishOnboarding();
+    }
+
+    function prevOnbStep() {
+        if (onbCurStep > 1) showOnbStep(onbCurStep - 1);
+    }
+
+    // ========== Toggle Switches ==========
+    var physioCustom = [];
+    function toggleSwitch(type) {
+        var tog = document.getElementById('toggle-' + type);
+        var exp = document.getElementById('expand-' + type);
+        var isOff = tog.classList.contains('off');
+        if (isOff) {
+            tog.classList.remove('off');
+            tog.classList.add('on');
+            exp.style.maxHeight = exp.scrollHeight + 'px';
+            exp.style.opacity = '1';
+            exp.style.marginTop = '12px';
+        } else {
+            tog.classList.remove('on');
+            tog.classList.add('off');
+            exp.style.maxHeight = '0px';
+            exp.style.opacity = '0';
+            exp.style.marginTop = '0px';
+        }
+    }
+
+    function selectSolo(el, group) {
+        document.querySelectorAll('#' + group + '-tags .tag-item').forEach(function(t) {
+            if (t.style.borderStyle !== 'dashed') t.classList.remove('sel');
+        });
+        el.classList.add('sel');
+    }
+
+    function reEditProfile() {
+        showOnbStep(1);
+        showToast('💡 请重新调整数据，方案将实时更新');
+    }
+
+    function finishOnboarding() {
+        document.getElementById('onboarding').classList.add('hidden');
+        if(document.getElementById('page-home')){switchPage('page-home')};
+        updateBMI();
+        updatePlanCalc();
+        showToast('方案已生成，开始您的健康之旅吧！');
+    }
+
+    // ========== Disease & Allergy Sheets ==========
+    function openDiseaseSheet() {
+        document.getElementById('disease-backdrop').classList.add('on');
+        document.getElementById('disease-sheet').classList.add('open');
+        document.getElementById('disease-sheet-input').value = '';
+        document.getElementById('disease-sheet-input').placeholder = '请输入疾病名称';
+        renderDiseaseChips();
+    }
+
+    function closeDiseaseSheet() {
+        document.getElementById('disease-backdrop').classList.remove('on');
+        document.getElementById('disease-sheet').classList.remove('open');
+    }
+
+    function confirmCustomDisease() {
+        var inp = document.getElementById('disease-sheet-input');
+        var name = inp.value.trim();
+        if (!name) { showToast('请输入名称'); return; }
+        if (inp.placeholder.indexOf('过敏') >= 0) {
+            if (customAllergies.indexOf(name) >= 0) { showToast('该过敏食物已添加'); return; }
+            customAllergies.push(name);
+            inp.value = '';
+            renderAllergyChips();
+        } else {
+            if (customDiseases.indexOf(name) >= 0) { showToast('该疾病已添加'); return; }
+            customDiseases.push(name);
+            inp.value = '';
+            renderDiseaseChips();
+            renderStep6DiseaseChips();
+        }
+    }
+
+    function renderDiseaseChips() {
+        var sc = document.getElementById('custom-disease-chips-sheet');
+        if (sc) sc.innerHTML = customDiseases.map(function(d, i) {
+            return '<span class="custom-disease-chip">' + d + '<span class="remove-chip" onclick="removeCustomDisease(' + i + ')">x</span></span>';
+        }).join('');
+    }
+
+    function renderStep6DiseaseChips() {
+        var dp = document.getElementById('custom-disease-chips-display');
+        if (dp) dp.innerHTML = customDiseases.map(function(d, i) {
+            return '<span class="custom-disease-chip">' + d + '<span class="remove-chip" onclick="removeCustomDisease(' + i + ')">x</span></span>';
+        }).join('');
+    }
+
+    function removeCustomDisease(idx) {
+        customDiseases.splice(idx, 1);
+        renderDiseaseChips();
+        renderStep6DiseaseChips();
+    }
+
+    function toggleDrugSwitch(track) {
+        track.classList.toggle('on');
+        var box = document.getElementById('drug-input-box');
+        if (box) box.classList.toggle('show', track.classList.contains('on'));
+    }
+
+    function toggleAllergySwitch(track) {
+        track.classList.toggle('on');
+        document.getElementById('allergy-box').style.display = track.classList.contains('on') ? 'block' : 'none';
+    }
+
+    function openAllergySheet() {
+        document.getElementById('disease-backdrop').classList.add('on');
+        document.getElementById('disease-sheet').classList.add('open');
+        document.getElementById('disease-sheet-input').value = '';
+        document.getElementById('disease-sheet-input').placeholder = '请输入过敏食物名称';
+        renderAllergyChips();
+    }
+
+    function renderAllergyChips() {
+        var sc = document.getElementById('custom-allergy-chips');
+        if (sc) sc.innerHTML = customAllergies.map(function(d, i) {
+            return '<span class="custom-disease-chip">' + d + '<span class="remove-chip" onclick="removeCustomAllergy(' + i + ')">x</span></span>';
+        }).join('');
+    }
+
+    function removeCustomAllergy(idx) {
+        customAllergies.splice(idx, 1);
+        renderAllergyChips();
+    }
+
+    // ========== Init ==========
+    showOnbStep(1);
+    switchPage('page-tracking');
+
+// ========== OPTIMIZED FIXES ==========
+// 1. Confirm dialog (replaces showToast for destructive actions)
+function confirmAction(msg, onYes, onNo) {
+    if (confirm(msg)) { if (onYes) onYes(); }
+    else { if (onNo) onNo(); }
+}
+
+// 2. Real save: read form & store to localStorage
+function saveFormData(sectionId, toastMsg) {
+    var data = {};
+    var el = document.getElementById(sectionId);
+    if (!el) { showToast(toastMsg); return; }
+    var inputs = el.querySelectorAll('input, select, textarea');
+    var hasValue = false;
+    inputs.forEach(function(inp) {
+        if (inp.type === 'checkbox') { data[inp.name || inp.id] = inp.checked; }
+        else if (inp.type === 'radio') { if (inp.checked) data[inp.name || inp.id] = inp.value; }
+        else { data[inp.name || inp.id] = inp.value; if (inp.value.trim()) hasValue = true; }
+    });
+    // Also read selected chips
+    el.querySelectorAll('.tag-item.sel').forEach(function(t) {
+        data['chip_' + (t.getAttribute('data-key') || t.textContent.trim())] = true;
+    });
+    try { localStorage.setItem('health_app_' + sectionId, JSON.stringify(data)); } catch(e) {}
+    showToast(toastMsg + (hasValue ? ' ✅' : ' ⚠️ 未检测到输入内容'));
+}
+
+// 3. Cross-page nav fix: each file now has placeholder pages for all tabs
+function switchPageFixed(id) {
+    // If page doesn't exist in this file, show a placeholder
+    var page = document.getElementById('page-' + id);
+    if (!page) {
+        showToast('📱 此功能在「' + (id==='page-home'?'首页':id==='page-tracking'?'数据':id==='page-diet-record'?'饮食记录':id==='page-messages'?'消息':'我的') + '」页面中，请打开对应文件查看');
+        return;
+    }
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    page.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('tab-active'); });
+    var nav = document.querySelector('.nav-item[data-page="' + id + '"]');
+    if (nav) nav.classList.add('tab-active');
+    if (typeof switchPage === 'function') switchPage(id); // also call original
+}
+
+// 4. Empty state display
+function showEmptyState(containerId, msg) {
+    var el = document.getElementById(containerId);
+    if (!el || el.children.length > 0) return;
+    el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9CA3AF;"><iconify-icon icon="solar:file-text-linear" width="40"></iconify-icon><p style="font-size:13px;margin-top:12px;">' + msg + '</p></div>';
+}
+
+// 5. Fix: switchPage in bottom nav points to switchPageFixed
+(function() {
+    setTimeout(function() {
+        document.querySelectorAll('.nav-item[data-page]').forEach(function(n) {
+            var orig = n.getAttribute('onclick');
+            if (orig && orig.indexOf('switchPageFixed') === -1) {
+                n.setAttribute('onclick', orig.replace('switchPage(', 'switchPageFixed('));
+            }
+        });
+    }, 100);
+})();
+
+// 6. Fix: Logout with confirmation
+function confirmLogout() {
+    confirmAction('确定要退出登录吗？', function() {
+        showToast('已退出登录');
+        setTimeout(function() { location.reload(); }, 800);
+    });
+}
+
+// 7. Fix: Device unbind with confirmation
+function confirmUnbind() {
+    confirmAction('确定要解绑设备吗？解绑后需重新配对。', function() {
+        showToast('设备已解绑');
+    });
+}
+</script>
+</script>
+</div></body>
+</html>
